@@ -33,6 +33,33 @@ docker compose build && docker compose up -d
 
 Data (PocketBase database + uploads) staat in het volume `webtool_data` (`/data/pb` in de container).
 
+## Deploy op Proxmox (LXC + Docker)
+
+Uitrol via **[s4ndyp/scripts](https://github.com/s4ndyp/scripts)** (Xdio / zelfde stijl als Fileshare: git clone in de LXC, `docker compose build`, geen GHCR).
+
+Op de **Proxmox host** als root (na merge in [s4ndyp/scripts](https://github.com/s4ndyp/scripts)):
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/webtool/webtool.sh)"
+```
+
+Tot het script op `scripts` staat, vanuit deze repo:
+
+```bash
+export COMMUNITY_SCRIPTS_URL="https://raw.githubusercontent.com/s4ndyp/webtool/main/scripts/s4ndyp-scripts"
+bash -c "$(curl -fsSL ${COMMUNITY_SCRIPTS_URL}/webtool/webtool.sh)"
+```
+
+Standaard: **2 CPU**, **2 GB RAM**, **10 GB disk**; bereikbaar op **poort 80** in de LXC (`http://<IP>/`).
+
+**Update** in de container: `update`, of handmatig:
+
+```bash
+cd /opt/webtool && git pull --ff-only && docker compose build && docker compose up -d
+```
+
+Optioneel: `WEBTOOL_REPO_URL`, `WEBTOOL_BRANCH`. Zie ook [webtool/README-proxmox-section.md](https://github.com/s4ndyp/scripts/blob/main/webtool/README-proxmox-section.md) in de scripts-repo.
+
 ## Omgevingsvariabelen
 
 | Variabele         | Default                 | Beschrijving                          |
