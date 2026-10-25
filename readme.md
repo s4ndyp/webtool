@@ -18,47 +18,58 @@ chmod +x scripts/dev.sh
 
 Open [http://localhost:3000](http://localhost:3000). PocketBase draait lokaal op poort 8090; de browser praat via de proxy op `/api`.
 
-## Docker (build from git, zoals [fileshare](https://github.com/s4ndyp/fileshare))
+## Docker (GHCR, zoals [TrackNote](https://github.com/s4ndyp/tracknote))
+
+De image wordt op **GitHub Actions** gebouwd en gepusht naar `ghcr.io/s4ndyp/webtool:latest` (workflow: `.github/workflows/build.yml` bij push naar `main` / `beta`).
 
 ```bash
 cp .env.example .env   # optioneel poort aanpassen
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
-Update na `git pull`:
+Update:
 
 ```bash
-docker compose build && docker compose up -d
+docker compose pull && docker compose up -d
+```
+
+**Lokaal bouwen** (zonder GHCR):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
 Data (PocketBase database + uploads) staat in het volume `webtool_data` (`/data/pb` in de container).
 
+Maak het GHCR-package **public** onder GitHub → Packages, of log in met `docker login ghcr.io` voordat je pullt.
+
 ## Deploy op Proxmox (LXC + Docker)
 
-Uitrol via **[s4ndyp/scripts](https://github.com/s4ndyp/scripts)** (Xdio / zelfde stijl als Fileshare: git clone in de LXC, `docker compose build`, geen GHCR).
+Uitrol via **[s4ndyp/scripts](https://github.com/s4ndyp/scripts)** (Xdio): download `docker-compose.yml` van GitHub, **pull** van GHCR — geen build in de LXC.
 
-Op de **Proxmox host** als root (na merge in [s4ndyp/scripts](https://github.com/s4ndyp/scripts)):
+Op de **Proxmox host** als root:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/webtool/webtool.sh)"
 ```
 
-Tot het script op `scripts` staat, vanuit deze repo:
+Tijdelijk vanuit deze repo (tot merge in scripts):
 
 ```bash
 export COMMUNITY_SCRIPTS_URL="https://raw.githubusercontent.com/s4ndyp/webtool/main/scripts/s4ndyp-scripts"
 bash -c "$(curl -fsSL ${COMMUNITY_SCRIPTS_URL}/webtool/webtool.sh)"
 ```
 
-Standaard: **2 CPU**, **2 GB RAM**, **10 GB disk**; bereikbaar op **poort 80** in de LXC (`http://<IP>/`).
+Standaard: **1 CPU**, **1 GB RAM**, **8 GB disk**; poort **80** (`http://<IP>/`).
 
-**Update** in de container: `update`, of handmatig:
+**Update** in de container: `update`, of:
 
 ```bash
-cd /opt/webtool && git pull --ff-only && docker compose build && docker compose up -d
+cd /opt/webtool && docker compose pull && docker compose up -d
 ```
 
-Optioneel: `WEBTOOL_REPO_URL`, `WEBTOOL_BRANCH`. Zie ook [webtool/README-proxmox-section.md](https://github.com/s4ndyp/scripts/blob/main/webtool/README-proxmox-section.md) in de scripts-repo.
+Optioneel: `WEBTOOL_COMPOSE_URL`, `GHCR_TOKEN`. Zie [scripts/s4ndyp-scripts/webtool/README-proxmox-section.md](scripts/s4ndyp-scripts/webtool/README-proxmox-section.md).
 
 ## Omgevingsvariabelen
 

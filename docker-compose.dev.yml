@@ -1,0 +1,8 @@
+# Lokaal ontwikkelen: image zelf bouwen i.p.v. GHCR pullen.
+# Gebruik: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+
+services:
+  webtool:
+    build: .
+    image: webtool:local
+    pull_policy: build

@@ -1,8 +1,8 @@
-<!-- Copy-paste this section into https://github.com/s4ndyp/webtool/blob/main/readme.md (Deploy op Proxmox). -->
+<!-- Copy-paste into s4ndyp/webtool readme (Deploy op Proxmox). -->
 
 ## Deploy op Proxmox (LXC + Docker)
 
-Gebruik het **Xdio**-installatiescript in [s4ndyp/scripts](https://github.com/s4ndyp/scripts) (zelfde stijl als Fileshare: `community-scripts/core`, statisch netwerk, geen GHCR — deze repo wordt in de container gekloond en met `docker compose build` gebouwd).
+**Xdio**-script in [s4ndyp/scripts](https://github.com/s4ndyp/scripts): GHCR-image `ghcr.io/s4ndyp/webtool:latest` (gebouwd via GitHub Actions), geen build in de LXC.
 
 Op de **Proxmox host** als root:
 
@@ -10,14 +10,14 @@ Op de **Proxmox host** als root:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/webtool/webtool.sh)"
 ```
 
-Standaard resources: **2 CPU**, **2 GB RAM**, **10 GB disk**. De app luistert in de LXC op **poort 80** (`http://<container-ip>`).
+Standaard: **1 CPU**, **1 GB RAM**, **8 GB disk**. Poort **80** in de LXC (`http://<container-ip>`).
 
-**Update** in de container: `update`, of handmatig:
+Private package: `GHCR_TOKEN` (+ optioneel `GHCR_USERNAME`) op de host vóór install.
+
+**Update** in de container: `update`, of:
 
 ```bash
-cd /opt/webtool && git pull --ff-only && docker compose build && docker compose up -d
+cd /opt/webtool && curl -fsSL -O https://raw.githubusercontent.com/s4ndyp/webtool/main/docker-compose.yml && docker compose pull && docker compose up -d
 ```
 
-Optioneel andere fork/branch in de LXC (tijdens install): `WEBTOOL_REPO_URL`, `WEBTOOL_BRANCH`.
-
-Geen ingebouwde login — alleen vertrouwd netwerk of reverse proxy met toegangsbeheer.
+Optioneel: `WEBTOOL_COMPOSE_URL` (andere branch/fork compose).

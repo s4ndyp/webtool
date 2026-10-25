@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Webtool (subsite-portal) — Proxmox LXC + Docker (build from git, geen GHCR)
+# Webtool (subsite-portal) — Proxmox LXC + Docker (GHCR pull, geen build in LXC)
 # bash -c "$(curl -fsSL https://raw.githubusercontent.com/s4ndyp/scripts/main/webtool/webtool.sh)"
 
 export COMMUNITY_SCRIPTS_URL="${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/s4ndyp/scripts/main}"
@@ -17,9 +17,9 @@ fi
 
 APP="Webtool"
 var_tags="${var_tags:-web;docker;pocketbase}"
-var_cpu="${var_cpu:-2}"
-var_ram="${var_ram:-2048}"
-var_disk="${var_disk:-10}"
+var_cpu="${var_cpu:-1}"
+var_ram="${var_ram:-1024}"
+var_disk="${var_disk:-8}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
 var_arm64="${var_arm64:-yes}"
@@ -39,12 +39,14 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  msg_info "Updating Webtool from git"
+  msg_info "Updating Webtool (compose + GHCR pull)"
   cd /opt/webtool
-  $STD git fetch origin
-  $STD git pull --ff-only
-  msg_info "Rebuilding Webtool image (Patience)"
-  $STD docker compose build
+  COMPOSE_URL="${WEBTOOL_COMPOSE_URL:-https://raw.githubusercontent.com/s4ndyp/webtool/main/docker-compose.yml}"
+  curl -fsSL "${COMPOSE_URL}" -o docker-compose.yml
+  # shellcheck source=/dev/null
+  source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL}/lib/xdio-compose-install.sh")
+  xdio_compose_set_host_port docker-compose.yml "80" "3000"
+  $STD docker compose pull
   $STD docker compose up -d
   msg_ok "Updated Webtool"
   msg_ok "Updated successfully!"
