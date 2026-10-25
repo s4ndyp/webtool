@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - beta
-      - "cursor/**"
   workflow_dispatch:
 
 jobs:
@@ -19,21 +17,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Stel dynamische image tag in
+      - name: Stel image tag in
         id: set_tag
         run: |
-          BRANCH_NAME="${{ github.ref_name }}"
-          IMAGE_BASE_NAME="ghcr.io/${{ github.repository }}"
-
-          if [ "$BRANCH_NAME" == "main" ]; then
-            TAG_VALUE="$IMAGE_BASE_NAME:latest"
-          else
-            SAFE_BRANCH="${BRANCH_NAME//\//-}"
-            TAG_VALUE="$IMAGE_BASE_NAME:${SAFE_BRANCH}"
-          fi
-
-          echo "full_tag=$TAG_VALUE" >> $GITHUB_OUTPUT
-          echo "Geselecteerde tag: $TAG_VALUE"
+          IMAGE="ghcr.io/${{ github.repository }}:latest"
+          echo "full_tag=$IMAGE" >> $GITHUB_OUTPUT
+          echo "Geselecteerde tag: $IMAGE"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

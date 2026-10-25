@@ -1,5 +1,5 @@
 # Productie / Dockhand / Proxmox: alleen GHCR pullen (geen build-context nodig).
-# Image wordt gebouwd via .github/workflows/build.yml op push naar main/beta.
+# Image wordt gebouwd via .github/workflows/build.yml op push naar main.
 # Lokaal bouwen: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 services:

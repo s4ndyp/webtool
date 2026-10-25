@@ -20,7 +20,7 @@ Open [http://localhost:3000](http://localhost:3000). PocketBase draait lokaal op
 
 ## Docker (GHCR, zoals [TrackNote](https://github.com/s4ndyp/tracknote))
 
-De image wordt op **GitHub Actions** gebouwd en gepusht naar `ghcr.io/s4ndyp/webtool:latest` (workflow: `.github/workflows/build.yml` bij push naar `main` / `beta`).
+De image wordt op **GitHub Actions** gebouwd en gepusht naar `ghcr.io/s4ndyp/webtool:latest` (workflow: `.github/workflows/build.yml` alleen bij push naar **`main`**).
 
 ```bash
 cp .env.example .env   # optioneel poort aanpassen
