@@ -1,0 +1,4 @@
+{
+  "install": "npm install",
+  "start": "chmod +x scripts/dev.sh docker/entrypoint.sh 2>/dev/null; ./scripts/dev.sh"
+}
