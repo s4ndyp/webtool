@@ -1,7 +1,11 @@
+# Productie / Dockhand / Proxmox: alleen GHCR pullen (geen build-context nodig).
+# Image wordt gebouwd via .github/workflows/build.yml op push naar main.
+# Lokaal bouwen: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+
 services:
   webtool:
-    build: .
-    image: webtool:latest
+    image: ghcr.io/s4ndyp/webtool:latest
+    pull_policy: always
     container_name: webtool
     restart: unless-stopped
     ports:

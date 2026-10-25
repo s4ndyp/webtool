@@ -1,5 +1,7 @@
 # Proxmox-scripts (Xdio) voor Webtool
 
+GHCR-pull install (geen `docker compose build` in de LXC). De app-image komt van GitHub Actions → `ghcr.io/s4ndyp/webtool:latest`.
+
 Deze map spiegelt wat in [s4ndyp/scripts](https://github.com/s4ndyp/scripts) hoort (`webtool/`, `install/`, `ct/`). Na merge in **scripts** op `main` werkt:
 
 ```bash

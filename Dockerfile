@@ -20,7 +20,7 @@ ARG POCKETBASE_VERSION=0.22.34
 
 RUN apt-get update && apt-get install -y --no-install-recommends tini wget ca-certificates unzip \
   && rm -rf /var/lib/apt/lists/* \
-  && curl -fsSL "https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_amd64.zip" -o /tmp/pb.zip \
+  && wget -q -O /tmp/pb.zip "https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_amd64.zip" \
   && unzip -q /tmp/pb.zip -d /usr/local/bin \
   && chmod +x /usr/local/bin/pocketbase \
   && rm /tmp/pb.zip \
