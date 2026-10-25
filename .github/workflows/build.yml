@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - beta
+      - "cursor/**"
   workflow_dispatch:
 
 jobs:
@@ -27,7 +28,8 @@ jobs:
           if [ "$BRANCH_NAME" == "main" ]; then
             TAG_VALUE="$IMAGE_BASE_NAME:latest"
           else
-            TAG_VALUE="$IMAGE_BASE_NAME:$BRANCH_NAME"
+            SAFE_BRANCH="${BRANCH_NAME//\//-}"
+            TAG_VALUE="$IMAGE_BASE_NAME:${SAFE_BRANCH}"
           fi
 
           echo "full_tag=$TAG_VALUE" >> $GITHUB_OUTPUT
