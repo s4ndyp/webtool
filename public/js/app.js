@@ -82,6 +82,11 @@ async function loadSubsites() {
     const res = await fetch(
       `${pbBase}/api/collections/subsites/records?sort=-created&perPage=200`
     );
+    if (res.status === 404) {
+      throw new Error(
+        "Database-tabellen ontbreken. Herstart de container (migraties) of controleer PocketBase."
+      );
+    }
     if (!res.ok) throw new Error("Kon subsites niet laden.");
     const data = await res.json();
     const items = data.items || [];
