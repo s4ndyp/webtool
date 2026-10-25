@@ -33,8 +33,11 @@ const formError = document.getElementById("form-error");
 const uploadProgress = document.getElementById("upload-progress");
 const uploadStatus = document.getElementById("upload-status");
 const btnSubmit = document.getElementById("btn-submit");
+const btnEdit = document.getElementById("btn-edit");
 
 let slugManual = false;
+let editMode = false;
+let subsiteItems = [];
 
 inputName.addEventListener("input", () => {
   if (!slugManual) {
@@ -58,6 +61,20 @@ document.getElementById("btn-new").addEventListener("click", () => {
 document.getElementById("btn-close").addEventListener("click", () => dialog.close());
 document.getElementById("btn-cancel").addEventListener("click", () => dialog.close());
 
+btnEdit.addEventListener("click", () => {
+  editMode = !editMode;
+  btnEdit.setAttribute("aria-pressed", editMode ? "true" : "false");
+  btnEdit.textContent = editMode ? "Klaar" : "Bewerken";
+  renderTiles();
+});
+
+function setEditMode(enabled) {
+  editMode = enabled;
+  btnEdit.setAttribute("aria-pressed", editMode ? "true" : "false");
+  btnEdit.textContent = editMode ? "Klaar" : "Bewerken";
+  renderTiles();
+}
+
 function hideFormError() {
   formError.classList.add("hidden");
   formError.textContent = "";
@@ -74,9 +91,93 @@ function normalizeRelativePath(webkitRelativePath) {
   return parts.slice(1).join("/");
 }
 
+async function deleteSubsite(item) {
+  const ok = window.confirm(
+    `"${item.name}" en alle bijbehorende bestanden verwijderen?`
+  );
+  if (!ok) return;
+
+  const res = await fetch(
+    `${pbBase}/api/collections/subsites/records/${item.id}`,
+    { method: "DELETE" }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message || "Verwijderen mislukt.");
+  }
+}
+
+function renderTiles() {
+  tilesEl.innerHTML = "";
+  tilesEl.classList.toggle("tiles--edit", editMode);
+
+  if (subsiteItems.length === 0) {
+    emptyState.classList.remove("hidden");
+    return;
+  }
+
+  emptyState.classList.add("hidden");
+
+  for (const item of subsiteItems) {
+    const wrap = document.createElement("div");
+    wrap.className = "tile-wrap";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "tile-delete";
+    deleteBtn.title = `${item.name} verwijderen`;
+    deleteBtn.setAttribute("aria-label", `${item.name} verwijderen`);
+    deleteBtn.textContent = "×";
+    deleteBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        deleteBtn.disabled = true;
+        await deleteSubsite(item);
+        subsiteItems = subsiteItems.filter((s) => s.id !== item.id);
+        renderTiles();
+      } catch (err) {
+        loadError.textContent =
+          err instanceof Error ? err.message : "Verwijderen mislukt.";
+        loadError.classList.remove("hidden");
+        deleteBtn.disabled = false;
+      }
+    });
+    wrap.appendChild(deleteBtn);
+
+    const link = document.createElement("a");
+    link.className = "tile";
+    link.href = subsiteHref(item.slug);
+    link.title = item.name;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    const iconSrc = iconUrl(item);
+    if (iconSrc) {
+      const img = document.createElement("img");
+      img.className = "tile-icon";
+      img.src = iconSrc;
+      img.alt = "";
+      link.appendChild(img);
+    } else {
+      const placeholder = document.createElement("div");
+      placeholder.className = "tile-icon placeholder";
+      placeholder.textContent = (item.name || "?").charAt(0).toUpperCase();
+      link.appendChild(placeholder);
+    }
+
+    const name = document.createElement("span");
+    name.className = "tile-name";
+    name.textContent = item.name;
+    link.appendChild(name);
+
+    wrap.appendChild(link);
+    tilesEl.appendChild(wrap);
+  }
+}
+
 async function loadSubsites() {
   loadError.classList.add("hidden");
-  tilesEl.innerHTML = "";
 
   try {
     const res = await fetch(
@@ -89,47 +190,14 @@ async function loadSubsites() {
     }
     if (!res.ok) throw new Error("Kon subsites niet laden.");
     const data = await res.json();
-    const items = data.items || [];
-
-    if (items.length === 0) {
-      emptyState.classList.remove("hidden");
-      return;
-    }
-
-    emptyState.classList.add("hidden");
-
-    for (const item of items) {
-      const link = document.createElement("a");
-      link.className = "tile";
-      link.href = subsiteHref(item.slug);
-      link.title = item.name;
-
-      const iconSrc = iconUrl(item);
-      if (iconSrc) {
-        const img = document.createElement("img");
-        img.className = "tile-icon";
-        img.src = iconSrc;
-        img.alt = "";
-        link.appendChild(img);
-      } else {
-        const placeholder = document.createElement("div");
-        placeholder.className = "tile-icon placeholder";
-        placeholder.textContent = (item.name || "?").charAt(0).toUpperCase();
-        link.appendChild(placeholder);
-      }
-
-      const name = document.createElement("span");
-      name.className = "tile-name";
-      name.textContent = item.name;
-      link.appendChild(name);
-
-      tilesEl.appendChild(link);
-    }
+    subsiteItems = data.items || [];
+    renderTiles();
   } catch (err) {
     loadError.textContent =
       err instanceof Error ? err.message : "Onbekende fout bij laden.";
     loadError.classList.remove("hidden");
     emptyState.classList.add("hidden");
+    tilesEl.innerHTML = "";
   }
 }
 
