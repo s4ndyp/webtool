@@ -1,0 +1,18 @@
+{
+  "name": "webtool",
+  "version": "1.0.0",
+  "description": "Subsite-portal met PocketBase — upload mappen als tegels op een startpagina",
+  "main": "server/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^3.0.5"
+  }
+}
