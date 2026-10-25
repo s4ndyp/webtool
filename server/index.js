@@ -93,10 +93,18 @@ async function resolveIndexPath(subsiteId) {
 
 app.get("/api/health", async (_req, res) => {
   try {
-    const r = await pbFetch("/api/health");
-    res.status(r.ok ? 200 : 503).json({
+    const health = await pbFetch("/api/health");
+    const schema = await pbFetch(
+      "/api/collections/subsites/records?perPage=1"
+    );
+    const pocketbase = health.ok
+      ? schema.ok
+        ? "ok"
+        : "schema-missing"
+      : "error";
+    res.status(health.ok && schema.ok ? 200 : 503).json({
       portal: "ok",
-      pocketbase: r.ok ? "ok" : "error",
+      pocketbase,
     });
   } catch {
     res.status(503).json({ portal: "ok", pocketbase: "unreachable" });

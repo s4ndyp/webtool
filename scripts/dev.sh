@@ -5,6 +5,7 @@ cd "$ROOT"
 
 PB_BIN="$ROOT/pocketbase/pocketbase"
 PB_DATA="$ROOT/pocketbase/pb_data"
+PB_MIGRATIONS="$ROOT/pocketbase/pb_migrations"
 
 if [[ ! -x "$PB_BIN" ]]; then
   echo "PocketBase binary ontbreekt; downloaden…"
@@ -17,7 +18,10 @@ fi
 mkdir -p "$PB_DATA"
 npm install
 
-"$PB_BIN" serve --http=127.0.0.1:8090 --dir="$PB_DATA" &
+"$PB_BIN" serve \
+  --http=127.0.0.1:8090 \
+  --dir="$PB_DATA" \
+  --migrationsDir="$PB_MIGRATIONS" &
 PB_PID=$!
 trap 'kill "$PB_PID" 2>/dev/null || true' EXIT
 

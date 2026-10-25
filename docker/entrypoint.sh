@@ -2,13 +2,17 @@
 set -e
 
 PB_DATA_DIR="${PB_DATA_DIR:-/data/pb}"
+PB_MIGRATIONS_DIR="${PB_MIGRATIONS_DIR:-/app/pb_migrations}"
 PB_BIN="${POCKETBASE_BIN:-/usr/local/bin/pocketbase}"
 PB_HTTP="${POCKETBASE_HTTP:-127.0.0.1:8090}"
 
 mkdir -p "$PB_DATA_DIR"
 
 cd /app
-"$PB_BIN" serve --http="$PB_HTTP" --dir="$PB_DATA_DIR" &
+"$PB_BIN" serve \
+  --http="$PB_HTTP" \
+  --dir="$PB_DATA_DIR" \
+  --migrationsDir="$PB_MIGRATIONS_DIR" &
 PB_PID=$!
 
 i=0
