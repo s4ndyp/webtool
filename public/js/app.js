@@ -23,6 +23,7 @@ function subsiteHref(slug) {
 const tilesEl = document.getElementById("tiles");
 const emptyState = document.getElementById("empty-state");
 const loadError = document.getElementById("load-error");
+const editHint = document.getElementById("edit-hint");
 const dialog = document.getElementById("dialog-create");
 const form = document.getElementById("form-create");
 const inputName = document.getElementById("input-name");
@@ -35,9 +36,22 @@ const uploadStatus = document.getElementById("upload-status");
 const btnSubmit = document.getElementById("btn-submit");
 const btnEdit = document.getElementById("btn-edit");
 
+const dialogEdit = document.getElementById("dialog-edit");
+const formEdit = document.getElementById("form-edit");
+const editName = document.getElementById("edit-name");
+const editSlug = document.getElementById("edit-slug");
+const editIcon = document.getElementById("edit-icon");
+const editFolder = document.getElementById("edit-folder");
+const editFormError = document.getElementById("edit-form-error");
+const editUploadProgress = document.getElementById("edit-upload-progress");
+const editUploadStatus = document.getElementById("edit-upload-status");
+const btnEditSave = document.getElementById("btn-edit-save");
+
 let slugManual = false;
 let editMode = false;
 let subsiteItems = [];
+/** @type {object | null} */
+let editingSubsite = null;
 
 inputName.addEventListener("input", () => {
   if (!slugManual) {
@@ -61,19 +75,20 @@ document.getElementById("btn-new").addEventListener("click", () => {
 document.getElementById("btn-close").addEventListener("click", () => dialog.close());
 document.getElementById("btn-cancel").addEventListener("click", () => dialog.close());
 
+document.getElementById("btn-edit-close").addEventListener("click", () =>
+  dialogEdit.close()
+);
+document.getElementById("btn-edit-cancel").addEventListener("click", () =>
+  dialogEdit.close()
+);
+
 btnEdit.addEventListener("click", () => {
   editMode = !editMode;
   btnEdit.setAttribute("aria-pressed", editMode ? "true" : "false");
   btnEdit.textContent = editMode ? "Klaar" : "Bewerken";
+  editHint.classList.toggle("hidden", !editMode);
   renderTiles();
 });
-
-function setEditMode(enabled) {
-  editMode = enabled;
-  btnEdit.setAttribute("aria-pressed", editMode ? "true" : "false");
-  btnEdit.textContent = editMode ? "Klaar" : "Bewerken";
-  renderTiles();
-}
 
 function hideFormError() {
   formError.classList.add("hidden");
@@ -83,6 +98,16 @@ function hideFormError() {
 function showFormError(message) {
   formError.textContent = message;
   formError.classList.remove("hidden");
+}
+
+function hideEditFormError() {
+  editFormError.classList.add("hidden");
+  editFormError.textContent = "";
+}
+
+function showEditFormError(message) {
+  editFormError.textContent = message;
+  editFormError.classList.remove("hidden");
 }
 
 function normalizeRelativePath(webkitRelativePath) {
@@ -105,6 +130,65 @@ async function deleteSubsite(item) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message || "Verwijderen mislukt.");
   }
+}
+
+function openEditDialog(item) {
+  editingSubsite = item;
+  formEdit.reset();
+  hideEditFormError();
+  editUploadProgress.classList.add("hidden");
+  editUploadStatus.classList.add("hidden");
+  editName.value = item.name || "";
+  editSlug.value = item.slug || "";
+  dialogEdit.showModal();
+}
+
+async function fetchSiteFilesForSubsite(subsiteId) {
+  const filter = encodeURIComponent(`subsite="${subsiteId}"`);
+  const res = await fetch(
+    `${pbBase}/api/collections/site_files/records?filter=${filter}&perPage=500`
+  );
+  if (!res.ok) {
+    throw new Error("Kon bestandenlijst niet laden.");
+  }
+  const data = await res.json();
+  return data.items || [];
+}
+
+async function deleteAllSiteFiles(subsiteId) {
+  const files = await fetchSiteFilesForSubsite(subsiteId);
+  for (const record of files) {
+    const res = await fetch(
+      `${pbBase}/api/collections/site_files/records/${record.id}`,
+      { method: "DELETE" }
+    );
+    if (!res.ok) {
+      throw new Error("Kon oude bestanden niet verwijderen.");
+    }
+  }
+}
+
+async function updateSubsiteRecord(id, name, slug, iconFile) {
+  const body = new FormData();
+  body.append("name", name);
+  body.append("slug", slug);
+  if (iconFile) body.append("icon", iconFile);
+
+  const res = await fetch(`${pbBase}/api/collections/subsites/records/${id}`, {
+    method: "PATCH",
+    body,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg =
+      err?.data?.slug?.message ||
+      err?.message ||
+      "Opslaan mislukt (bestaat slug al?).";
+    throw new Error(msg);
+  }
+
+  return res.json();
 }
 
 function renderTiles() {
@@ -145,12 +229,18 @@ function renderTiles() {
     });
     wrap.appendChild(deleteBtn);
 
-    const link = document.createElement("a");
-    link.className = "tile";
-    link.href = subsiteHref(item.slug);
-    link.title = item.name;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
+    const tile = document.createElement(editMode ? "button" : "a");
+    tile.className = "tile";
+    tile.title = item.name;
+
+    if (editMode) {
+      tile.type = "button";
+      tile.addEventListener("click", () => openEditDialog(item));
+    } else {
+      tile.href = subsiteHref(item.slug);
+      tile.target = "_blank";
+      tile.rel = "noopener noreferrer";
+    }
 
     const iconSrc = iconUrl(item);
     if (iconSrc) {
@@ -158,20 +248,20 @@ function renderTiles() {
       img.className = "tile-icon";
       img.src = iconSrc;
       img.alt = "";
-      link.appendChild(img);
+      tile.appendChild(img);
     } else {
       const placeholder = document.createElement("div");
       placeholder.className = "tile-icon placeholder";
       placeholder.textContent = (item.name || "?").charAt(0).toUpperCase();
-      link.appendChild(placeholder);
+      tile.appendChild(placeholder);
     }
 
     const name = document.createElement("span");
     name.className = "tile-name";
     name.textContent = item.name;
-    link.appendChild(name);
+    tile.appendChild(name);
 
-    wrap.appendChild(link);
+    wrap.appendChild(tile);
     tilesEl.appendChild(wrap);
   }
 }
@@ -237,9 +327,7 @@ async function uploadSiteFile(subsiteId, path, file) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(
-      err?.message || `Upload mislukt voor ${path}`
-    );
+    throw new Error(err?.message || `Upload mislukt voor ${path}`);
   }
 }
 
@@ -291,6 +379,67 @@ form.addEventListener("submit", async (event) => {
     btnSubmit.disabled = false;
     uploadProgress.classList.add("hidden");
     uploadStatus.classList.add("hidden");
+  }
+});
+
+formEdit.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  hideEditFormError();
+
+  if (!editingSubsite) return;
+
+  const name = editName.value.trim();
+  const slug = editSlug.value.trim();
+  const iconFile = editIcon.files?.[0] || null;
+  const files = [...(editFolder.files || [])];
+
+  if (!name || !slug) {
+    showEditFormError("Vul naam en slug in.");
+    return;
+  }
+
+  btnEditSave.disabled = true;
+  editUploadProgress.classList.toggle("hidden", files.length === 0);
+  editUploadStatus.classList.toggle("hidden", files.length === 0);
+  editUploadProgress.value = 0;
+
+  try {
+    editUploadStatus.textContent = "Gegevens opslaan…";
+    const updated = await updateSubsiteRecord(
+      editingSubsite.id,
+      name,
+      slug,
+      iconFile
+    );
+
+    if (files.length > 0) {
+      editUploadStatus.textContent = "Oude bestanden verwijderen…";
+      await deleteAllSiteFiles(editingSubsite.id);
+      let done = 0;
+      for (const file of files) {
+        const relPath = normalizeRelativePath(
+          file.webkitRelativePath || file.name
+        );
+        if (!relPath) continue;
+        editUploadStatus.textContent = `Uploaden: ${relPath} (${done + 1}/${files.length})`;
+        await uploadSiteFile(editingSubsite.id, relPath, file);
+        done += 1;
+        editUploadProgress.value = Math.round((done / files.length) * 100);
+      }
+    }
+
+    subsiteItems = subsiteItems.map((s) =>
+      s.id === updated.id ? updated : s
+    );
+    dialogEdit.close();
+    editingSubsite = null;
+    renderTiles();
+  } catch (err) {
+    showEditFormError(err instanceof Error ? err.message : "Opslaan mislukt.");
+  } finally {
+    btnEditSave.disabled = false;
+    editUploadProgress.classList.add("hidden");
+    editUploadStatus.classList.add("hidden");
   }
 });
 

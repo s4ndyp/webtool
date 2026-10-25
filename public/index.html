@@ -29,6 +29,10 @@
       </header>
 
       <main>
+        <p id="edit-hint" class="edit-hint hidden">
+          Klik op een tegel om naam, slug of icoon aan te passen. Gebruik × om te
+          verwijderen.
+        </p>
         <div id="tiles" class="tiles" aria-live="polite"></div>
         <p id="empty-state" class="empty-state hidden">
           Nog geen subsites. Klik op <strong>Nieuwe subsite</strong> om te
@@ -106,6 +110,88 @@
           <button type="button" class="btn btn-ghost" id="btn-cancel">Annuleren</button>
           <button type="submit" class="btn btn-primary" id="btn-submit">
             Uploaden &amp; publiceren
+          </button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="dialog-edit" class="dialog">
+      <form id="form-edit" method="dialog" class="dialog-inner">
+        <header class="dialog-header">
+          <h2>Subsite bewerken</h2>
+          <button
+            type="button"
+            class="icon-btn"
+            id="btn-edit-close"
+            aria-label="Sluiten"
+          >
+            &times;
+          </button>
+        </header>
+
+        <label class="field">
+          <span>Naam van de app</span>
+          <input
+            type="text"
+            id="edit-name"
+            name="name"
+            required
+            maxlength="200"
+            autocomplete="off"
+          />
+        </label>
+
+        <label class="field">
+          <span>URL-slug</span>
+          <input
+            type="text"
+            id="edit-slug"
+            name="slug"
+            required
+            maxlength="100"
+            pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          />
+          <small>Wijzigen verandert het adres (/s/&lt;slug&gt;/).</small>
+        </label>
+
+        <label class="field">
+          <span>Nieuw tegel-icoon (optioneel)</span>
+          <input
+            type="file"
+            id="edit-icon"
+            name="icon"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+          />
+        </label>
+
+        <label class="field">
+          <span>Websitebestanden vervangen (optioneel)</span>
+          <input
+            type="file"
+            id="edit-folder"
+            name="folder"
+            webkitdirectory
+            directory
+            multiple
+          />
+          <small>Vervangt alle bestanden van deze subsite door de gekozen map.</small>
+        </label>
+
+        <p id="edit-form-error" class="form-error hidden"></p>
+        <progress
+          id="edit-upload-progress"
+          class="upload-progress hidden"
+          max="100"
+          value="0"
+        ></progress>
+        <p id="edit-upload-status" class="upload-status hidden"></p>
+
+        <footer class="dialog-footer">
+          <button type="button" class="btn btn-ghost" id="btn-edit-cancel">
+            Annuleren
+          </button>
+          <button type="submit" class="btn btn-primary" id="btn-edit-save">
+            Opslaan
           </button>
         </footer>
       </form>
